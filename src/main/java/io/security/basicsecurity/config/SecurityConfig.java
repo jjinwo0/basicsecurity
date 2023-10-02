@@ -8,10 +8,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 @Configuration
@@ -50,5 +53,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     }
                 }) // 로그인 실패 시 호출할 handler 지정
                 .permitAll(); // 해당 page url은 누구나 접근 가능함
+
+        http
+                .logout()
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login") // 단순 URL 지정
+                .addLogoutHandler(new LogoutHandler() {
+                    @Override
+                    public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+
+                        HttpSession session = request.getSession(); // 현재 세션 확인
+                        session.invalidate(); // 세션 무효화
+                    }
+                })
+                .logoutSuccessHandler(new LogoutSuccessHandler() {
+                    @Override
+                    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+
+                        // todo 추가 작업
+                        response.sendRedirect("/login"); // .logoutSuccessUrl("/login")이 하는 역할과 동일
+                    }
+                }) // 로그아웃 성공 시 다양한 로직 수행
+                .deleteCookies("remember-me"); // 서버에서 삭제하고 싶은 쿠키명 작성
     }
 }
